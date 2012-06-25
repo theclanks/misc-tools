@@ -1,2 +1,2 @@
-Sharing some useful tools for day-to-day
-========================================
+Sharing some useful tools on a daily basis
+==========================================

@@ -1,0 +1,64 @@
+#!/usr/bin/perl
+#############################################################################################
+# Author : Luis Carlos Otte Junior - lcotte
+# email : jrluiscarlos@yahoo.com.br
+# Name : check_zimbra_mailq.pl
+# Version : 1.0
+# Object : Check mailbox queue for zimbra in Nagios
+# USAGE : check_zimbra_mailq.pl ARG0 ARG1
+#             - ARG0 : Value WARNING
+#             - ARG1 : Value CRITICAL
+# Example : check_zimbra_mailq.pl 90 95
+#############################################################################################
+
+use strict;
+use Getopt::Long;
+#####START VARIABLES#####
+my $command = '/opt/zimbra/postfix/sbin/mailq';
+my $warning = $ARGV[0]; # Define threshold for warning alert in %
+my $critical = $ARGV[1]; # Define threshold for critical alert in %
+my $code=0;
+my ($forget, $value, $codeForget, $msg);
+my $countwarn = 0;
+my $countcrit = 0;
+my @result;
+#####END VARIABLES#####
+
+@result = `$command`;
+
+if (($warning == "") || ($critical == "")) {
+        $forget = "ERROR COMMAND LINE
+USAGE : ./check_zimbra_mailboxquota.pl ARG0 ARG1
+     - ARG0 : Value WARNING
+     - ARG1 : Value CRITICAL
+Example : check_zimbra_mailboxquota.pl 90 95";
+        $codeForget = 2;
+        print "$forget\n";
+        exit ($codeForget);
+}
+
+foreach (@result) {
+
+        if (~/Kbytes in (\d+)/) {
+                $value = $1 ;
+
+                if ($value < $warning) {
+                        $code = 0;
+                }elsif ( ($value > $warning) && ($value < $critical) ) {
+                        $code = 1;
+                }elsif ( ($value > $warning) && ($value > $critical) ) {
+                        $code = 2;
+                }
+
+        }elsif (~/Mail queue is empty/) {
+                $value = 0;
+        }
+}
+
+if ($code == 0) { $msg = "OK: Mail Queue request is $value"; }
+if ($code == 1) { $msg = "WARNING: Mail Queue request is  $value and exceed the warning value $warning"; }
+if ($code == 2) { $msg = "CRITICAL: Mail Queue request is $value and exceed the critical value $critical"; }
+
+print "$msg\n";
+exit($code);
+

@@ -1,0 +1,2 @@
+#!/bin/bash
+rtmpdump -V -r "rtmp://209.51.135.130/radiolagoinha/radiolagoinha" -f WIN 11,0,1,152-p "http://www.point7creative.com/point7player/" -s "http://www.point7creative.com/point7player/radiolagoinha2.swf" -t "rtmp://209.51.135.130/radiolagoinha/radiolagoinha"  --live  | mplayer -msgcolor -

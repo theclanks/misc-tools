@@ -1,32 +1,7 @@
 #!/usr/bin/perl -w
-#
-# check_sip plugin for nagios
-# $Revision: 1.2 $
-#
-# Nagios plugin to check SIP servers
-#
-# By Sam Bashton, Bashton Ltd
-# bashton.com/content/nagiosplugins
-# Michael Hirschbichler, Institute of Broadband Communications, 
-#  Vienna University of Technology
-#
-#   This program is free software; you can redistribute it and/or modify
-#   it under the terms of the GNU General Public License as published by
-#   the Free Software Foundation; either version 2 of the License, or
-#   (at your option) any later version.
-#
-#   This program is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#   GNU General Public License for more details.
-#
-#   You should have received a copy of the GNU General Public License
-#   along with this program; if not, write to the Free Software
-#   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 use strict;
 use lib "./";
-use utils qw($TIMEOUT %ERRORS &print_revision &support);
 use vars qw($PROGNAME);
 use IO::Socket::INET;
 #use Sys::Hostname;
@@ -35,6 +10,9 @@ use Net::Domain qw (hostname hostfqdn hostdomain);
 
 $PROGNAME = "check_sip";
 my $VERSION  = "1.2";
+my $TIMEOUT = 15;
+my %ERRORS=('OK'=>0,'WARNING'=>1,'CRITICAL'=>2,'UNKNOWN'=>3,'DEPENDENT'=>4);
+
 
 $ENV{'BASH_ENV'}=''; 
 $ENV{'ENV'}='';
@@ -56,7 +34,7 @@ GetOptions(
   "u=s" => \$opt_u,   "uri=s"         => \$opt_u,
   "p=s" => \$opt_p,   "port=s"        => \$opt_p,
   "H=s" => \$opt_H,   "host=s"        => \$opt_H,
-  "w=s" => \$opt_w,   "warn=s"	      => \$opt_w
+  "w=s" => \$opt_w,   "warn=s"        => \$opt_w
 );
 
 # -h displays help
@@ -64,7 +42,8 @@ if ($opt_h) { printHelp(); exit $ERRORS{'OK'}; }
 
 # -V display version number
 if ($opt_V) {
-  print_revision($PROGNAME, $VERSION);
+   #print_revision($PROGNAME, $VERSION);
+#  print "Version 1.0";
   exit $ERRORS{'OK'};
 };
 
@@ -78,7 +57,7 @@ unless ($opt_p) { $opt_p = 5060 }
 unless ($opt_H) { $opt_H = hostFromURI($opt_u) }
 
 # Check the host is valid
-unless (utils::is_hostname($opt_H))
+unless (is_hostname($opt_H))
 {
   print "$opt_H is not a valid hostname\n";
   printHelp();
@@ -125,6 +104,41 @@ exit $ERRORS{$state};
 
 ### Subroutines ##############################################################
 
+sub print_revision ($$) {
+	my $commandName = shift;
+	my $pluginRevision = shift;
+	print "$commandName v$pluginRevision (nagios-plugins 1.4.15)\n";
+	print "The nagios plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\ncopies of the plugins under the terms of the GNU General Public License.\nFor more information about these matters, see the file named COPYING.\n";
+}
+
+sub support () {
+	my $support='Send email to nagios-users@lists.sourceforge.net if you have questions\nregarding use of this software. To submit patches or suggest improvements,\nsend email to nagiosplug-devel@lists.sourceforge.net.\nPlease include version information with all correspondence (when possible,\nuse output from the --version option of the plugin itself).\n';
+	$support =~ s/@/\@/g;
+	$support =~ s/\\n/\n/g;
+	print $support;
+}
+
+sub usage {
+	my $format=shift;
+	printf($format,@_);
+	exit $ERRORS{'UNKNOWN'};
+}
+
+sub is_hostname {
+	my $host1 = shift;
+	return 0 unless defined $host1;
+	if ($host1 =~ m/^[\d\.]+$/ && $host1 !~ /\.$/) {
+		if ($host1 =~ m/^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/) {
+			return 1;
+		} else {
+			return 0;
+		}
+	} elsif ($host1 =~ m/^[a-zA-Z0-9][-a-zA-Z0-9]*(\.[a-zA-Z0-9][-a-zA-Z0-9]*)*\.?$/) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
 
 sub uconnect
 {
@@ -250,3 +264,4 @@ sub checkResponse
     else { print "Unknown error: $tstring, $rtime seconds response time|rtt=".$rtime."s;0.5s;1s;0:10; code=".$rcode."\n"; return 0; }
   }
 }
+
